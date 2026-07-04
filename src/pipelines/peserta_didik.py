@@ -1,5 +1,5 @@
 from src.bandung_api import fetch_all
-from src.pipelines.common import base_fields, is_valid_key_row
+from src.pipelines.common import base_fields, is_valid_key_row, upper
 from src.supabase_client import upsert_batch
 
 ENDPOINT = "jumlah_peserta_didik_di_sekolah_menengah_pertama_kota"
@@ -10,9 +10,8 @@ ON_CONFLICT = "npsn,jenis_kelamin,tahun,semester_ajaran"
 def _clean(row: dict) -> dict:
     return {
         **base_fields(row),
-        "jenis_kelamin": (row.get("jenis_kelamin") or "").strip().upper(),
+        "jenis_kelamin": upper(row.get("jenis_kelamin")),
         "jumlah_siswa": row.get("jumlah_siswa") or 0,
-        "satuan": row.get("satuan"),
     }
 
 

@@ -16,6 +16,18 @@ Semua data diambil dari API publik Dinas Pendidikan:
 
 Catatan: dataset guru/PTK tidak menyediakan data umur, jadi kolom umur tidak ada di tabel `smp_ptk`.
 
+## Kolom per Tabel
+
+`npsn` disimpan di ketiga tabel sebagai kunci unik internal (bukan untuk dipakai tim
+dashboard), supaya data per sekolah tidak saling menimpa saat upsert.
+
+- `smp_sekolah`: `kemendagri_nama_kecamatan`, `status_sekolah`, `semester_ajaran`, `tahun`
+- `smp_peserta_didik`: `kemendagri_nama_kecamatan`, `jenis_kelamin`, `jumlah_siswa`, `semester_ajaran`, `tahun`
+- `smp_ptk`: `kemendagri_nama_kecamatan`, `status_kepegawaian`, `jumlah_ptk`, `semester_ajaran`, `tahun`
+
+Catatan: `smp_ptk` tidak membedakan jenis PTK (guru/kepala sekolah/tendik).
+`jumlah_ptk` adalah total ketiganya per status kepegawaian.
+
 ## Struktur Project
 
 ```
@@ -59,7 +71,7 @@ melakukan **upsert** ke Supabase berdasarkan kunci unik masing-masing tabel:
 
 - `smp_sekolah`: `(npsn, tahun, semester_ajaran)`
 - `smp_peserta_didik`: `(npsn, jenis_kelamin, tahun, semester_ajaran)`
-- `smp_ptk`: `(npsn, jenis_ptk, status_kepegawaian, tahun, semester_ajaran)`
+- `smp_ptk`: `(npsn, status_kepegawaian, tahun, semester_ajaran)`
 
 Kalau kombinasi kunci itu sudah ada di database, baris akan di-update (bukan duplikat).
 Kalau belum ada, baris baru ditambahkan. Dengan begitu proses scraping berulang aman
