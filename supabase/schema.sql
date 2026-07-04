@@ -64,14 +64,13 @@ create trigger trg_smp_peserta_didik_updated_at
 
 -- =========================================================
 -- 3. Jumlah Guru & Tenaga Kependidikan (PTK) SMP
--- Catatan: jumlah_ptk adalah total guru+kepala sekolah+tendik digabung
--- per status kepegawaian (jenis_ptk tidak disimpan terpisah).
 -- =========================================================
 drop table if exists smp_ptk;
 create table smp_ptk (
   id bigint generated always as identity primary key,
   npsn bigint not null,
   kemendagri_nama_kecamatan text,
+  jenis_ptk text not null check (jenis_ptk in ('GURU', 'KEPALA SEKOLAH', 'TENDIK')),
   status_kepegawaian text not null check (status_kepegawaian in ('ASN', 'NON ASN')),
   jumlah_ptk integer not null default 0,
   semester_ajaran smallint not null,
@@ -79,7 +78,7 @@ create table smp_ptk (
   scraped_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (npsn, status_kepegawaian, tahun, semester_ajaran)
+  unique (npsn, jenis_ptk, status_kepegawaian, tahun, semester_ajaran)
 );
 
 create index idx_smp_ptk_kecamatan on smp_ptk (kemendagri_nama_kecamatan);
