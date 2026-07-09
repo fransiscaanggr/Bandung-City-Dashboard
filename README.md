@@ -21,12 +21,12 @@ Catatan: dataset guru/PTK tidak menyediakan data umur, jadi kolom umur tidak ada
 `npsn` disimpan di ketiga tabel sebagai kunci unik internal (bukan untuk dipakai tim
 dashboard), supaya data per sekolah tidak saling menimpa saat upsert.
 
-- `smp_sekolah`: `kemendagri_nama_kecamatan`, `status_sekolah`, `semester_ajaran`, `tahun`
+- `smp_sekolah`: `kemendagri_nama_kecamatan`, `status_sekolah`, `latitude`, `longitude`, `semester_ajaran`, `tahun`
 - `smp_peserta_didik`: `kemendagri_nama_kecamatan`, `jenis_kelamin`, `jumlah_siswa`, `semester_ajaran`, `tahun`
 - `smp_ptk`: `kemendagri_nama_kecamatan`, `jenis_ptk`, `status_kepegawaian`, `jumlah_ptk`, `semester_ajaran`, `tahun`
 
-Catatan: `smp_sekolah` tidak menyimpan `latitude`/`longitude`/`nama_sekolah`, jadi
-chart peta sebaran sekolah tidak bisa dibuat dari tabel ini.
+Catatan: `smp_sekolah` menyimpan `latitude`/`longitude` per sekolah untuk keperluan
+peta sebaran, tapi tidak menyimpan `nama_sekolah` (tidak dibutuhkan untuk chart manapun).
 
 ## Struktur Project
 

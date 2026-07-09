@@ -21,6 +21,8 @@ create table smp_sekolah (
   npsn bigint not null,
   kemendagri_nama_kecamatan text,
   status_sekolah text not null check (status_sekolah in ('NEGERI', 'SWASTA')),
+  latitude double precision,
+  longitude double precision,
   semester_ajaran smallint not null,
   tahun smallint not null,
   scraped_at timestamptz not null default now(),

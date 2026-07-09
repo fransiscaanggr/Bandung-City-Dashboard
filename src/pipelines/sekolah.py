@@ -11,6 +11,8 @@ def _clean(row: dict) -> dict:
     return {
         **base_fields(row),
         "status_sekolah": upper(row.get("status_sekolah")),
+        "latitude": row.get("latitude"),
+        "longitude": row.get("longitude"),
     }
 
 
