@@ -2,8 +2,8 @@ from src.bandung_api import fetch_all
 from src.pipelines.common import base_fields, is_valid_key_row, to_float, upper
 from src.supabase_client import upsert_batch
 
-ENDPOINT = "sekolah_menengah_pertama_di_kota_bandung"
-TABLE = "smp_sekolah"
+ENDPOINT = "sekolah_dasar_di_kota_bandung"
+TABLE = "sd_sekolah"
 ON_CONFLICT = "npsn,tahun,semester_ajaran"
 
 

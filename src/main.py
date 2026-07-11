@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from src.pipelines import peserta_didik, ptk, sekolah
+from src.pipelines import peserta_didik, ptk, sd_peserta_didik, sd_ptk, sd_sekolah, sekolah
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -10,6 +10,9 @@ PIPELINES = [
     ("Daftar SMP Kota Bandung", sekolah.run),
     ("Jumlah Peserta Didik SMP", peserta_didik.run),
     ("Jumlah Guru & Tenaga Kependidikan (PTK) SMP", ptk.run),
+    ("Daftar SD Kota Bandung", sd_sekolah.run),
+    ("Jumlah Peserta Didik SD", sd_peserta_didik.run),
+    ("Jumlah Guru & Tenaga Kependidikan (PTK) SD", sd_ptk.run),
 ]
 
 

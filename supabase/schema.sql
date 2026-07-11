@@ -93,3 +93,81 @@ drop trigger if exists trg_smp_ptk_updated_at on smp_ptk;
 create trigger trg_smp_ptk_updated_at
   before update on smp_ptk
   for each row execute function set_updated_at();
+
+-- =========================================================
+-- 4. Daftar SD Kota Bandung (negeri & swasta)
+-- =========================================================
+create table if not exists sd_sekolah (
+  id bigint generated always as identity primary key,
+  npsn bigint not null,
+  kemendagri_nama_kecamatan text,
+  status_sekolah text not null check (status_sekolah in ('NEGERI', 'SWASTA')),
+  latitude double precision,
+  longitude double precision,
+  semester_ajaran smallint not null,
+  tahun smallint not null,
+  scraped_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (npsn, tahun, semester_ajaran)
+);
+
+create index if not exists idx_sd_sekolah_kecamatan on sd_sekolah (kemendagri_nama_kecamatan);
+create index if not exists idx_sd_sekolah_status on sd_sekolah (status_sekolah);
+create index if not exists idx_sd_sekolah_tahun on sd_sekolah (tahun, semester_ajaran);
+
+drop trigger if exists trg_sd_sekolah_updated_at on sd_sekolah;
+create trigger trg_sd_sekolah_updated_at
+  before update on sd_sekolah
+  for each row execute function set_updated_at();
+
+-- =========================================================
+-- 5. Jumlah Peserta Didik SD (per sekolah, per jenis kelamin)
+-- =========================================================
+create table if not exists sd_peserta_didik (
+  id bigint generated always as identity primary key,
+  npsn bigint not null,
+  kemendagri_nama_kecamatan text,
+  jenis_kelamin text not null check (jenis_kelamin in ('LAKI-LAKI', 'PEREMPUAN')),
+  jumlah_siswa integer not null default 0,
+  semester_ajaran smallint not null,
+  tahun smallint not null,
+  scraped_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (npsn, jenis_kelamin, tahun, semester_ajaran)
+);
+
+create index if not exists idx_sd_peserta_didik_kecamatan on sd_peserta_didik (kemendagri_nama_kecamatan);
+create index if not exists idx_sd_peserta_didik_tahun on sd_peserta_didik (tahun, semester_ajaran);
+
+drop trigger if exists trg_sd_peserta_didik_updated_at on sd_peserta_didik;
+create trigger trg_sd_peserta_didik_updated_at
+  before update on sd_peserta_didik
+  for each row execute function set_updated_at();
+
+-- =========================================================
+-- 6. Jumlah Guru & Tenaga Kependidikan (PTK) SD
+-- =========================================================
+create table if not exists sd_ptk (
+  id bigint generated always as identity primary key,
+  npsn bigint not null,
+  kemendagri_nama_kecamatan text,
+  jenis_ptk text not null check (jenis_ptk in ('GURU', 'KEPALA SEKOLAH', 'TENDIK')),
+  status_kepegawaian text not null check (status_kepegawaian in ('ASN', 'NON ASN')),
+  jumlah_ptk integer not null default 0,
+  semester_ajaran smallint not null,
+  tahun smallint not null,
+  scraped_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (npsn, jenis_ptk, status_kepegawaian, tahun, semester_ajaran)
+);
+
+create index if not exists idx_sd_ptk_kecamatan on sd_ptk (kemendagri_nama_kecamatan);
+create index if not exists idx_sd_ptk_tahun on sd_ptk (tahun, semester_ajaran);
+
+drop trigger if exists trg_sd_ptk_updated_at on sd_ptk;
+create trigger trg_sd_ptk_updated_at
+  before update on sd_ptk
+  for each row execute function set_updated_at();
