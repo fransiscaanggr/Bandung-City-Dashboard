@@ -171,3 +171,74 @@ drop trigger if exists trg_sd_ptk_updated_at on sd_ptk;
 create trigger trg_sd_ptk_updated_at
   before update on sd_ptk
   for each row execute function set_updated_at();
+
+-- =========================================================
+-- Tabel import manual (Excel), terpisah dari tabel hasil scraping.
+--
+-- Kadang Dinas Pendidikan ngasih data lewat file Excel yang levelnya
+-- agregat per kecamatan/kelurahan, bukan per sekolah kayak API. Daripada
+-- dipaksain masuk ke smp_*/sd_* (yang npsn-nya dari scraping), datanya
+-- ditaruh disini sendiri. Satu bentuk tabel dipakai bareng buat SD & SMP,
+-- dibedain lewat kolom jenjang. Karena tabelnya beda sendiri, data import
+-- ini gak akan pernah numpuk atau nabrak sama data hasil scraping.
+-- =========================================================
+
+-- Daftar sekolah dari file Excel (npsn ada, tapi biasanya gak ada tahun/
+-- semester di file-nya, jadi itu diisi manual pas import)
+create table if not exists import_sekolah (
+  id bigint generated always as identity primary key,
+  jenjang text not null check (jenjang in ('SD', 'SMP')),
+  npsn bigint not null,
+  nama_sekolah text,
+  status_sekolah text not null check (status_sekolah in ('NEGERI', 'SWASTA')),
+  no_telp text,
+  alamat text,
+  kelurahan text,
+  kecamatan text,
+  semester_ajaran smallint not null,
+  tahun smallint not null,
+  sumber_file text,
+  imported_at timestamptz not null default now(),
+  unique (jenjang, npsn, tahun, semester_ajaran)
+);
+
+create index if not exists idx_import_sekolah_kecamatan on import_sekolah (kecamatan);
+create index if not exists idx_import_sekolah_tahun on import_sekolah (tahun, semester_ajaran);
+
+-- Jumlah siswa, agregat per kecamatan + kelurahan + status sekolah
+create table if not exists import_siswa_kecamatan (
+  id bigint generated always as identity primary key,
+  jenjang text not null check (jenjang in ('SD', 'SMP')),
+  kecamatan text not null,
+  kelurahan text,
+  status_sekolah text not null check (status_sekolah in ('NEGERI', 'SWASTA')),
+  jumlah_laki integer not null default 0,
+  jumlah_perempuan integer not null default 0,
+  semester_ajaran smallint not null,
+  tahun smallint not null,
+  sumber_file text,
+  imported_at timestamptz not null default now(),
+  unique (jenjang, kecamatan, kelurahan, status_sekolah, tahun, semester_ajaran)
+);
+
+create index if not exists idx_import_siswa_kecamatan_tahun on import_siswa_kecamatan (tahun, semester_ajaran);
+
+-- Jumlah PTK, agregat per kecamatan + jenis PTK + status kepegawaian
+create table if not exists import_ptk_kecamatan (
+  id bigint generated always as identity primary key,
+  jenjang text not null check (jenjang in ('SD', 'SMP')),
+  kecamatan text not null,
+  status_sekolah text not null check (status_sekolah in ('NEGERI', 'SWASTA')),
+  jenis_ptk text not null,
+  jenis_ptk_detail text,
+  status_kepegawaian text not null check (status_kepegawaian in ('ASN', 'NON ASN')),
+  status_kepegawaian_detail text,
+  jumlah_ptk integer not null default 0,
+  semester_ajaran smallint not null,
+  tahun smallint not null,
+  sumber_file text,
+  imported_at timestamptz not null default now(),
+  unique (jenjang, kecamatan, status_sekolah, jenis_ptk, jenis_ptk_detail, status_kepegawaian, status_kepegawaian_detail, tahun, semester_ajaran)
+);
+
+create index if not exists idx_import_ptk_kecamatan_tahun on import_ptk_kecamatan (tahun, semester_ajaran);

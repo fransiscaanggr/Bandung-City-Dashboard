@@ -1,3 +1,4 @@
 requests>=2.32
 supabase>=2.9
 python-dotenv>=1.0
+python-calamine>=0.3

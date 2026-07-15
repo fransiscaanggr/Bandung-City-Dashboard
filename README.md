@@ -53,8 +53,15 @@ src/
     sd_peserta_didik.py  pipeline jumlah peserta didik SD
     sd_ptk.py             pipeline jumlah guru & tenaga kependidikan SD
   main.py                entrypoint, jalankan semua pipeline (SMP + SD)
+scripts/
+  import_xlsx.py         importir manual buat file Excel dari dinas
+  generate_template.py   generator template Excel kosong
+templates/
+  template_daftar_sekolah.xlsx
+  template_jumlah_siswa.xlsx
+  template_jumlah_ptk.xlsx
 supabase/
-  schema.sql             DDL untuk 6 tabel di atas
+  schema.sql             DDL untuk 9 tabel (6 hasil scraping + 3 import manual)
 .github/workflows/
   scrape.yml             jadwal otomatis tiap 6 jam (GitHub Actions)
 ```
@@ -97,3 +104,41 @@ repo GitHub (Settings > Secrets and variables > Actions):
 
 - `SUPABASE_URL`
 - `SUPABASE_SECRET_KEY`
+
+## Import Manual (Excel)
+
+Kadang Dinas Pendidikan cuma ngasih data lewat file Excel, bukan lewat API. Buat
+kasus ini ada `scripts/import_xlsx.py`, dipakai lewat command line:
+
+```
+python scripts/import_xlsx.py "nama_file.xlsx" --jenjang SD
+python scripts/import_xlsx.py "nama_file.xlsx" --jenjang SMP --tahun 2025 --semester 1
+```
+
+Bentuk file dideteksi otomatis dari nama kolom di header, jadi 1 file bisa dikenali
+sebagai salah satu dari 3 tipe:
+
+- **Daftar sekolah** (ada kolom `NPSN`) &rarr; tabel `import_sekolah`
+- **Jumlah PTK per kecamatan** (ada kolom `JENIS PTK`) &rarr; tabel `import_ptk_kecamatan`
+- **Jumlah siswa per kecamatan** (ada kolom `JUMLAH LAKI LAKI`) &rarr; tabel `import_siswa_kecamatan`
+
+`--semester` otomatis kedeteksi dari nama file kalau ada kata "ganjil"/"genap".
+Kalau file daftar sekolah (biasanya nggak ada info tahun/semester sama sekali),
+`--tahun` dan `--semester` wajib diisi manual.
+
+Template kosong buat isi data baru ada di folder [templates/](templates/)
+(dibuat dari `scripts/generate_template.py`), satu bentuk yang sama dipakai
+buat SD maupun SMP karena jenjangnya ditentukan lewat flag `--jenjang`, bukan
+dari isi file.
+
+### Kenapa nggak nabrak data hasil scraping
+
+Tabel `import_*` ini **terpisah total** dari tabel `smp_*`/`sd_*` hasil scraping,
+soalnya levelnya beda: hasil scraping itu per sekolah (npsn dari API), sedangkan
+data Excel dari dinas biasanya sudah agregat per kecamatan/kelurahan (nggak ada
+npsn). Karena tabelnya beda sendiri, nggak ada mekanisme dedup rumit yang perlu
+dijaga, dan data hasil scraping otomatis tetap aman biarpun proses import
+dijalankan berkali-kali. Satu-satunya file yang levelnya per sekolah (daftar
+sekolah dari Excel) juga tetap masuk `import_sekolah`, bukan `smp_sekolah`/
+`sd_sekolah`, biar konsisten dan gampang dilacak baris mana yang asalnya dari
+scraping API dan mana yang dari input manual (lihat kolom `sumber_file`).
