@@ -17,5 +17,5 @@ def _clean(row: dict) -> dict:
 
 
 def run() -> int:
-    rows = [_clean(row) for row in fetch_all(ENDPOINT) if is_valid_key_row(row)]
+    rows = [_clean(row) for row in fetch_all("dinas_pendidikan", ENDPOINT) if is_valid_key_row(row)]
     return upsert_batch(TABLE, rows, ON_CONFLICT)

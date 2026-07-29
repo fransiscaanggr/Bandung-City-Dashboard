@@ -9,9 +9,9 @@ from src.config import BANDUNG_API_BASE_URL
 logger = logging.getLogger(__name__)
 
 
-def fetch_all(endpoint: str, per_page: int = 1000, max_retries: int = 3, timeout: int = 30) -> Iterator[dict]:
+def fetch_all(dinas: str, endpoint: str, per_page: int = 1000, max_retries: int = 3, timeout: int = 30) -> Iterator[dict]:
     """Ambil semua baris dari satu endpoint API opendata Bandung, dengan pagination otomatis."""
-    url = f"{BANDUNG_API_BASE_URL}/{endpoint}"
+    url = f"{BANDUNG_API_BASE_URL}/{dinas}/{endpoint}"
     page = 1
     while True:
         payload = _get_with_retry(url, {"page": page, "per_page": per_page}, max_retries, timeout)

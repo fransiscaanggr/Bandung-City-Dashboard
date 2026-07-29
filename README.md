@@ -1,21 +1,23 @@
-# Bandung City Dashboard - Data Pipeline Pendidikan SMP & SD
+# Bandung City Dashboard - Data Pipeline
 
-Pipeline Python untuk mengambil data pendidikan SMP & SD Kota Bandung dari
-[opendata.bandung.go.id](https://opendata.bandung.go.id) dan menyimpannya ke Supabase.
+Pipeline Python untuk mengambil data Kota Bandung (pendidikan SMP & SD, rumah sakit)
+dari [opendata.bandung.go.id](https://opendata.bandung.go.id) dan menyimpannya ke Supabase.
 
 ## Sumber Data
 
-Semua data diambil dari API publik Dinas Pendidikan:
-`https://opendata.bandung.go.id/api/bigdata/dinas_pendidikan/`
+Data pendidikan diambil dari API Dinas Pendidikan, data rumah sakit dari API Dinas
+Kesehatan. Base URL-nya sama, cuma beda nama dinas:
+`https://opendata.bandung.go.id/api/bigdata/<nama_dinas>/<endpoint>`
 
-| Dataset | Endpoint | Tabel Supabase |
-|---|---|---|
-| Daftar SMP (negeri & swasta) | `sekolah_menengah_pertama_di_kota_bandung` | `smp_sekolah` |
-| Jumlah peserta didik SMP per sekolah & jenis kelamin | `jumlah_peserta_didik_di_sekolah_menengah_pertama_kota` | `smp_peserta_didik` |
-| Jumlah guru & tenaga kependidikan (PTK) SMP | `jumlah_guru_dan_tenaga_kependidikan_ptk_sekolah_menen` | `smp_ptk` |
-| Daftar SD (negeri & swasta) | `sekolah_dasar_di_kota_bandung` | `sd_sekolah` |
-| Jumlah peserta didik SD per sekolah & jenis kelamin | `jumlah_peserta_didik_di_sekolah_dasar_kota_bandung_1` | `sd_peserta_didik` |
-| Jumlah guru & tenaga kependidikan (PTK) SD | `jmlh_gr_tng_kpnddkn_ptk_sklh_dsr_d_kt_bndng` | `sd_ptk` |
+| Dataset | Dinas | Endpoint | Tabel Supabase |
+|---|---|---|---|
+| Daftar SMP (negeri & swasta) | dinas_pendidikan | `sekolah_menengah_pertama_di_kota_bandung` | `smp_sekolah` |
+| Jumlah peserta didik SMP per sekolah & jenis kelamin | dinas_pendidikan | `jumlah_peserta_didik_di_sekolah_menengah_pertama_kota` | `smp_peserta_didik` |
+| Jumlah guru & tenaga kependidikan (PTK) SMP | dinas_pendidikan | `jumlah_guru_dan_tenaga_kependidikan_ptk_sekolah_menen` | `smp_ptk` |
+| Daftar SD (negeri & swasta) | dinas_pendidikan | `sekolah_dasar_di_kota_bandung` | `sd_sekolah` |
+| Jumlah peserta didik SD per sekolah & jenis kelamin | dinas_pendidikan | `jumlah_peserta_didik_di_sekolah_dasar_kota_bandung_1` | `sd_peserta_didik` |
+| Jumlah guru & tenaga kependidikan (PTK) SD | dinas_pendidikan | `jmlh_gr_tng_kpnddkn_ptk_sklh_dsr_d_kt_bndng` | `sd_ptk` |
+| Rumah sakit | dinas_kesehatan | `rumah_sakit_di_kota_bandung` | `rumah_sakit` |
 
 Catatan: dataset guru/PTK (SMP maupun SD) tidak menyediakan data umur, jadi kolom
 umur tidak ada di tabel `smp_ptk`/`sd_ptk`.
@@ -24,6 +26,15 @@ Catatan lain: dataset SD tipe datanya kurang konsisten dari sumbernya (`npsn`,
 `tahun`, `semester_ajaran`, `longitude` kadang dikirim sebagai angka, kadang
 sebagai teks). Pipeline sudah nge-cast semuanya (lihat `to_int`/`to_float` di
 `src/pipelines/common.py`), jadi ini bukan hal yang perlu dikhawatirkan.
+
+Catatan soal rumah sakit: sumbernya nggak punya kolom `latitude`/`longitude`
+maupun `tahun`, beda dari dataset pendidikan. Jadi tabel `rumah_sakit` cuma
+snapshot terkini (nggak ada dimensi tahun), dan chart peta titik nggak bisa
+dibuat dari data ini, cuma peta wilayah (choropleth per kecamatan) yang bisa.
+`jenis_rumah_sakit` juga disimpan dalam 4 kategori asli dari sumbernya
+(`PEMERINTAH DAERAH`, `PEMERINTAH PUSAT`, `SWASTA`, `TNI/POLRI`), bukan cuma
+2 kategori Negeri/Swasta. Kalau butuh KPI "Total RS Negeri", jumlahkan semua
+kategori selain `SWASTA`.
 
 ## Kolom per Tabel
 
@@ -36,6 +47,9 @@ dashboard), supaya data per sekolah tidak saling menimpa saat upsert.
 
 Catatan: tabel `*_sekolah` menyimpan `latitude`/`longitude` per sekolah untuk keperluan
 peta sebaran, tapi tidak menyimpan `nama_sekolah` (tidak dibutuhkan untuk chart manapun).
+
+`rumah_sakit` juga punya kunci unik internal sendiri (`sumber_id`, dari `id` di API),
+dengan kolom yang dipakai tim dashboard: `kecamatan`, `jenis_rumah_sakit`, `kelas`.
 
 ## Struktur Project
 
@@ -52,7 +66,8 @@ src/
     sd_sekolah.py        pipeline daftar SD
     sd_peserta_didik.py  pipeline jumlah peserta didik SD
     sd_ptk.py             pipeline jumlah guru & tenaga kependidikan SD
-  main.py                entrypoint, jalankan semua pipeline (SMP + SD)
+    rumah_sakit.py       pipeline daftar rumah sakit
+  main.py                entrypoint, jalankan semua pipeline
 scripts/
   import_xlsx.py         importir manual buat file Excel dari dinas
   generate_template.py   generator template Excel kosong
@@ -61,7 +76,7 @@ templates/
   template_jumlah_siswa.xlsx
   template_jumlah_ptk.xlsx
 supabase/
-  schema.sql             DDL untuk 9 tabel (6 hasil scraping + 3 import manual)
+  schema.sql             DDL untuk 10 tabel (7 hasil scraping + 3 import manual)
 .github/workflows/
   scrape.yml             jadwal otomatis tiap 6 jam (GitHub Actions)
 ```
@@ -91,6 +106,7 @@ melakukan **upsert** ke Supabase berdasarkan kunci unik masing-masing tabel:
 - `smp_sekolah` / `sd_sekolah`: `(npsn, tahun, semester_ajaran)`
 - `smp_peserta_didik` / `sd_peserta_didik`: `(npsn, jenis_kelamin, tahun, semester_ajaran)`
 - `smp_ptk` / `sd_ptk`: `(npsn, jenis_ptk, status_kepegawaian, tahun, semester_ajaran)`
+- `rumah_sakit`: `(sumber_id)`
 
 Kalau kombinasi kunci itu sudah ada di database, baris akan di-update (bukan duplikat).
 Kalau belum ada, baris baru ditambahkan. Dengan begitu proses scraping berulang aman

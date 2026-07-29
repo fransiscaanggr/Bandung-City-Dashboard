@@ -242,3 +242,29 @@ create table if not exists import_ptk_kecamatan (
 );
 
 create index if not exists idx_import_ptk_kecamatan_tahun on import_ptk_kecamatan (tahun, semester_ajaran);
+
+-- =========================================================
+-- 7. Rumah Sakit Kota Bandung
+-- Sumber: opendata.bandung.go.id (API Dinas Kesehatan)
+-- Ini snapshot terkini, gak ada dimensi tahun/semester kayak data sekolah.
+-- Gak ada latitude/longitude di sumbernya, jadi gak bisa dipakai buat peta
+-- titik, cuma peta wilayah (choropleth per kecamatan).
+-- =========================================================
+create table if not exists rumah_sakit (
+  id bigint generated always as identity primary key,
+  sumber_id bigint not null unique,
+  kecamatan text not null,
+  jenis_rumah_sakit text not null check (jenis_rumah_sakit in ('PEMERINTAH DAERAH', 'PEMERINTAH PUSAT', 'SWASTA', 'TNI/POLRI')),
+  kelas text not null check (kelas in ('A', 'B', 'C', 'D')),
+  scraped_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_rumah_sakit_kecamatan on rumah_sakit (kecamatan);
+create index if not exists idx_rumah_sakit_jenis on rumah_sakit (jenis_rumah_sakit);
+
+drop trigger if exists trg_rumah_sakit_updated_at on rumah_sakit;
+create trigger trg_rumah_sakit_updated_at
+  before update on rumah_sakit
+  for each row execute function set_updated_at();
