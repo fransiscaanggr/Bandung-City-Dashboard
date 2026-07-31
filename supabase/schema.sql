@@ -253,8 +253,7 @@ drop table if exists rumah_sakit;
 create table rumah_sakit (
   id bigint generated always as identity primary key,
   sumber_id bigint not null unique,
-  nama_rs text,
-  kemendagri_nama_kecamatan text not null,
+  bps_nama_kecamatan text not null,
   jenis_rs text not null,
   status_rs text not null check (status_rs in ('PEMERINTAH DAERAH', 'PEMERINTAH PUSAT', 'SWASTA', 'TNI/POLRI')),
   kelas text not null check (kelas in ('A', 'B', 'C', 'D')),
@@ -266,7 +265,7 @@ create table rumah_sakit (
   updated_at timestamptz not null default now()
 );
 
-create index if not exists idx_rumah_sakit_kecamatan on rumah_sakit (kemendagri_nama_kecamatan);
+create index if not exists idx_rumah_sakit_kecamatan on rumah_sakit (bps_nama_kecamatan);
 create index if not exists idx_rumah_sakit_jenis on rumah_sakit (jenis_rs);
 create index if not exists idx_rumah_sakit_status on rumah_sakit (status_rs);
 create index if not exists idx_rumah_sakit_tahun on rumah_sakit (tahun);

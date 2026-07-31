@@ -13,8 +13,7 @@ ON_CONFLICT = "sumber_id"
 def _clean(row: dict) -> dict:
     return {
         "sumber_id": row.get("id"),
-        "nama_rs": (row.get("nama_rs") or "").strip() or None,
-        "kemendagri_nama_kecamatan": upper(row.get("kemendagri_nama_kecamatan")),
+        "bps_nama_kecamatan": upper(row.get("bps_nama_kecamatan")),
         "jenis_rs": upper(row.get("jenis_rs")),
         "status_rs": upper(row.get("status_rs")),
         "kelas": upper(row.get("kelas")),
@@ -30,7 +29,7 @@ def run() -> int:
         _clean(row)
         for row in fetch_all(DINAS, ENDPOINT)
         if row.get("id") is not None
-        and row.get("kemendagri_nama_kecamatan")
+        and row.get("bps_nama_kecamatan")
         and row.get("jenis_rs")
         and row.get("status_rs")
         and to_int(row.get("tahun")) is not None

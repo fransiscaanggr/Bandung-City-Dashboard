@@ -50,8 +50,9 @@ Catatan: tabel `*_sekolah` menyimpan `latitude`/`longitude` per sekolah untuk ke
 peta sebaran, tapi tidak menyimpan `nama_sekolah` (tidak dibutuhkan untuk chart manapun).
 
 `rumah_sakit` juga punya kunci unik internal sendiri (`sumber_id`, dari `id` di API),
-dengan kolom yang dipakai tim dashboard: `nama_rs`, `kemendagri_nama_kecamatan`,
-`jenis_rs`, `status_rs`, `kelas`, `latitude`, `longitude`, `tahun`.
+dengan kolom yang dipakai tim dashboard: `bps_nama_kecamatan`, `jenis_rs`, `status_rs`,
+`kelas`, `latitude`, `longitude`, `tahun`. Kecamatan-nya pakai versi BPS (`bps_nama_kecamatan`),
+bukan kemendagri seperti tabel sekolah, karena diminta begitu.
 
 ## Struktur Project
 
