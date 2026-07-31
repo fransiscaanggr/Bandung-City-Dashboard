@@ -37,6 +37,9 @@ kolom kategori yang beda maknanya jadi jangan ketuker:
 
 Kalau butuh KPI "Total RS Negeri", jumlahkan `status_rs` selain `SWASTA`.
 
+Pipeline cuma ambil data `tahun 2025` (sumbernya sebenarnya punya histori 2023-2025,
+tapi cuma 2025 yang dipakai, lihat `TAHUN_DIPAKAI` di `src/pipelines/rumah_sakit.py`).
+
 ## Kolom per Tabel
 
 `npsn` disimpan di semua tabel sebagai kunci unik internal (bukan untuk dipakai tim

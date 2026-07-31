@@ -8,6 +8,7 @@ DINAS = "dinas_kesehatan"
 ENDPOINT = "rumah_sakit_di_kota_bandung_1"
 TABLE = "rumah_sakit"
 ON_CONFLICT = "sumber_id"
+TAHUN_DIPAKAI = 2025
 
 
 def _clean(row: dict) -> dict:
@@ -32,6 +33,6 @@ def run() -> int:
         and row.get("bps_nama_kecamatan")
         and row.get("jenis_rs")
         and row.get("status_rs")
-        and to_int(row.get("tahun")) is not None
+        and to_int(row.get("tahun")) == TAHUN_DIPAKAI
     ]
     return upsert_batch(TABLE, rows, ON_CONFLICT)
