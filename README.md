@@ -17,7 +17,7 @@ Kesehatan. Base URL-nya sama, cuma beda nama dinas:
 | Daftar SD (negeri & swasta) | dinas_pendidikan | `sekolah_dasar_di_kota_bandung` | `sd_sekolah` |
 | Jumlah peserta didik SD per sekolah & jenis kelamin | dinas_pendidikan | `jumlah_peserta_didik_di_sekolah_dasar_kota_bandung_1` | `sd_peserta_didik` |
 | Jumlah guru & tenaga kependidikan (PTK) SD | dinas_pendidikan | `jmlh_gr_tng_kpnddkn_ptk_sklh_dsr_d_kt_bndng` | `sd_ptk` |
-| Rumah sakit | dinas_kesehatan | `rumah_sakit_di_kota_bandung` | `rumah_sakit` |
+| Rumah sakit | dinas_kesehatan | `rumah_sakit_di_kota_bandung_1` | `rumah_sakit` |
 
 Catatan: dataset guru/PTK (SMP maupun SD) tidak menyediakan data umur, jadi kolom
 umur tidak ada di tabel `smp_ptk`/`sd_ptk`.
@@ -27,14 +27,15 @@ Catatan lain: dataset SD tipe datanya kurang konsisten dari sumbernya (`npsn`,
 sebagai teks). Pipeline sudah nge-cast semuanya (lihat `to_int`/`to_float` di
 `src/pipelines/common.py`), jadi ini bukan hal yang perlu dikhawatirkan.
 
-Catatan soal rumah sakit: sumbernya nggak punya kolom `latitude`/`longitude`
-maupun `tahun`, beda dari dataset pendidikan. Jadi tabel `rumah_sakit` cuma
-snapshot terkini (nggak ada dimensi tahun), dan chart peta titik nggak bisa
-dibuat dari data ini, cuma peta wilayah (choropleth per kecamatan) yang bisa.
-`jenis_rumah_sakit` juga disimpan dalam 4 kategori asli dari sumbernya
-(`PEMERINTAH DAERAH`, `PEMERINTAH PUSAT`, `SWASTA`, `TNI/POLRI`), bukan cuma
-2 kategori Negeri/Swasta. Kalau butuh KPI "Total RS Negeri", jumlahkan semua
-kategori selain `SWASTA`.
+Catatan soal rumah sakit: endpoint yang benar itu `rumah_sakit_di_kota_bandung_1`
+(ada suffix `_1`), bukan `rumah_sakit_di_kota_bandung` yang lebih pendek namanya.
+Endpoint yang pendek itu versi lama, datanya lebih sedikit (35 baris) dan nggak
+punya `latitude`/`longitude`/`tahun`. Endpoint `_1` punya semuanya, plus dua
+kolom kategori yang beda maknanya jadi jangan ketuker:
+- `jenis_rs`: spesialisasi RS (Rumah Sakit Umum, RS Khusus Ibu dan Anak, dst)
+- `status_rs`: kepemilikan (`PEMERINTAH DAERAH`, `PEMERINTAH PUSAT`, `SWASTA`, `TNI/POLRI`)
+
+Kalau butuh KPI "Total RS Negeri", jumlahkan `status_rs` selain `SWASTA`.
 
 ## Kolom per Tabel
 
@@ -49,7 +50,8 @@ Catatan: tabel `*_sekolah` menyimpan `latitude`/`longitude` per sekolah untuk ke
 peta sebaran, tapi tidak menyimpan `nama_sekolah` (tidak dibutuhkan untuk chart manapun).
 
 `rumah_sakit` juga punya kunci unik internal sendiri (`sumber_id`, dari `id` di API),
-dengan kolom yang dipakai tim dashboard: `kecamatan`, `jenis_rumah_sakit`, `kelas`.
+dengan kolom yang dipakai tim dashboard: `nama_rs`, `kemendagri_nama_kecamatan`,
+`jenis_rs`, `status_rs`, `kelas`, `latitude`, `longitude`, `tahun`.
 
 ## Struktur Project
 

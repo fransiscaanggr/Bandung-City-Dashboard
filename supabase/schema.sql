@@ -245,24 +245,31 @@ create index if not exists idx_import_ptk_kecamatan_tahun on import_ptk_kecamata
 
 -- =========================================================
 -- 7. Rumah Sakit Kota Bandung
--- Sumber: opendata.bandung.go.id (API Dinas Kesehatan)
--- Ini snapshot terkini, gak ada dimensi tahun/semester kayak data sekolah.
--- Gak ada latitude/longitude di sumbernya, jadi gak bisa dipakai buat peta
--- titik, cuma peta wilayah (choropleth per kecamatan).
+-- Sumber: opendata.bandung.go.id (API Dinas Kesehatan), endpoint
+-- rumah_sakit_di_kota_bandung_1 (bukan rumah_sakit_di_kota_bandung biasa,
+-- yang itu versi lama tanpa lat/long/tahun dan jenis/status ketuker).
 -- =========================================================
-create table if not exists rumah_sakit (
+drop table if exists rumah_sakit;
+create table rumah_sakit (
   id bigint generated always as identity primary key,
   sumber_id bigint not null unique,
-  kecamatan text not null,
-  jenis_rumah_sakit text not null check (jenis_rumah_sakit in ('PEMERINTAH DAERAH', 'PEMERINTAH PUSAT', 'SWASTA', 'TNI/POLRI')),
+  nama_rs text,
+  kemendagri_nama_kecamatan text not null,
+  jenis_rs text not null,
+  status_rs text not null check (status_rs in ('PEMERINTAH DAERAH', 'PEMERINTAH PUSAT', 'SWASTA', 'TNI/POLRI')),
   kelas text not null check (kelas in ('A', 'B', 'C', 'D')),
+  latitude double precision,
+  longitude double precision,
+  tahun smallint not null,
   scraped_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create index if not exists idx_rumah_sakit_kecamatan on rumah_sakit (kecamatan);
-create index if not exists idx_rumah_sakit_jenis on rumah_sakit (jenis_rumah_sakit);
+create index if not exists idx_rumah_sakit_kecamatan on rumah_sakit (kemendagri_nama_kecamatan);
+create index if not exists idx_rumah_sakit_jenis on rumah_sakit (jenis_rs);
+create index if not exists idx_rumah_sakit_status on rumah_sakit (status_rs);
+create index if not exists idx_rumah_sakit_tahun on rumah_sakit (tahun);
 
 drop trigger if exists trg_rumah_sakit_updated_at on rumah_sakit;
 create trigger trg_rumah_sakit_updated_at
