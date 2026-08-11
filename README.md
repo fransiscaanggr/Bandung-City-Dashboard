@@ -1,12 +1,12 @@
 # Bandung City Dashboard - Data Pipeline
 
-Pipeline Python untuk mengambil data Kota Bandung (pendidikan SMP & SD, rumah sakit)
-dari [opendata.bandung.go.id](https://opendata.bandung.go.id) dan menyimpannya ke Supabase.
+Pipeline Python untuk mengambil data Kota Bandung (pendidikan SMP & SD, rumah sakit,
+kependudukan) dari [opendata.bandung.go.id](https://opendata.bandung.go.id) dan
+menyimpannya ke Supabase.
 
 ## Sumber Data
 
-Data pendidikan diambil dari API Dinas Pendidikan, data rumah sakit dari API Dinas
-Kesehatan. Base URL-nya sama, cuma beda nama dinas:
+Data diambil dari 3 dinas/instansi berbeda. Base URL-nya sama, cuma beda nama dinas:
 `https://opendata.bandung.go.id/api/bigdata/<nama_dinas>/<endpoint>`
 
 | Dataset | Dinas | Endpoint | Tabel Supabase |
@@ -18,6 +18,9 @@ Kesehatan. Base URL-nya sama, cuma beda nama dinas:
 | Jumlah peserta didik SD per sekolah & jenis kelamin | dinas_pendidikan | `jumlah_peserta_didik_di_sekolah_dasar_kota_bandung_1` | `sd_peserta_didik` |
 | Jumlah guru & tenaga kependidikan (PTK) SD | dinas_pendidikan | `jmlh_gr_tng_kpnddkn_ptk_sklh_dsr_d_kt_bndng` | `sd_ptk` |
 | Rumah sakit | dinas_kesehatan | `rumah_sakit_di_kota_bandung_1` | `rumah_sakit` |
+| Kepadatan penduduk per kecamatan | dinas_kependudukan_dan_pencatatan_sipil | `jumlah_kepadatan_penduduk_di_kota_bandung_3` | `kepadatan_penduduk` |
+| Jumlah kepala keluarga per kecamatan, per jenis kelamin | dinas_kependudukan_dan_pencatatan_sipil | `jumlah_kepala_keluarga_di_kota_bandung_berdasarkan__3` | `kepala_keluarga` |
+| Luas wilayah per kecamatan | badan_pusat_statistik_kota_bandung | `luas_kecamatan_di_kota_bandung` | `luas_kecamatan` |
 
 Catatan: dataset guru/PTK (SMP maupun SD) tidak menyediakan data umur, jadi kolom
 umur tidak ada di tabel `smp_ptk`/`sd_ptk`.
@@ -56,6 +59,13 @@ dengan kolom yang dipakai tim dashboard: `bps_nama_kecamatan`, `jenis_rs`, `stat
 `kelas`, `latitude`, `longitude`, `tahun`. Kecamatan-nya pakai versi BPS (`bps_nama_kecamatan`),
 bukan kemendagri seperti tabel sekolah, karena diminta begitu.
 
+`kepadatan_penduduk`, `kepala_keluarga`, dan `luas_kecamatan` juga pakai `bps_nama_kecamatan`
+dan `sumber_id` (kunci unik internal), semuanya data per kecamatan (bukan per sekolah):
+
+- `kepadatan_penduduk`: `bps_nama_kecamatan`, `kepadatan_penduduk` (jiwa/km2), `tahun`
+- `kepala_keluarga`: `bps_nama_kecamatan`, `jenis_kelamin`, `jumlah_kk`, `tahun`
+- `luas_kecamatan`: `bps_nama_kecamatan`, `luas_wilayah` (km2), `tahun` (cuma ada tahun 2022 di sumbernya)
+
 ## Struktur Project
 
 ```
@@ -72,6 +82,9 @@ src/
     sd_peserta_didik.py  pipeline jumlah peserta didik SD
     sd_ptk.py             pipeline jumlah guru & tenaga kependidikan SD
     rumah_sakit.py       pipeline daftar rumah sakit
+    kepadatan_penduduk.py  pipeline kepadatan penduduk per kecamatan
+    kepala_keluarga.py     pipeline jumlah kepala keluarga per kecamatan
+    luas_kecamatan.py      pipeline luas wilayah per kecamatan
   main.py                entrypoint, jalankan semua pipeline
 scripts/
   import_xlsx.py         importir manual buat file Excel dari dinas
@@ -81,7 +94,7 @@ templates/
   template_jumlah_siswa.xlsx
   template_jumlah_ptk.xlsx
 supabase/
-  schema.sql             DDL untuk 10 tabel (7 hasil scraping + 3 import manual)
+  schema.sql             DDL untuk 13 tabel (10 hasil scraping + 3 import manual)
 .github/workflows/
   scrape.yml             jadwal otomatis tiap 6 jam (GitHub Actions)
 ```
@@ -111,7 +124,7 @@ melakukan **upsert** ke Supabase berdasarkan kunci unik masing-masing tabel:
 - `smp_sekolah` / `sd_sekolah`: `(npsn, tahun, semester_ajaran)`
 - `smp_peserta_didik` / `sd_peserta_didik`: `(npsn, jenis_kelamin, tahun, semester_ajaran)`
 - `smp_ptk` / `sd_ptk`: `(npsn, jenis_ptk, status_kepegawaian, tahun, semester_ajaran)`
-- `rumah_sakit`: `(sumber_id)`
+- `rumah_sakit` / `kepadatan_penduduk` / `kepala_keluarga` / `luas_kecamatan`: `(sumber_id)`
 
 Kalau kombinasi kunci itu sudah ada di database, baris akan di-update (bukan duplikat).
 Kalau belum ada, baris baru ditambahkan. Dengan begitu proses scraping berulang aman

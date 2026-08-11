@@ -1,7 +1,18 @@
 import logging
 import sys
 
-from src.pipelines import peserta_didik, ptk, rumah_sakit, sd_peserta_didik, sd_ptk, sd_sekolah, sekolah
+from src.pipelines import (
+    kepadatan_penduduk,
+    kepala_keluarga,
+    luas_kecamatan,
+    peserta_didik,
+    ptk,
+    rumah_sakit,
+    sd_peserta_didik,
+    sd_ptk,
+    sd_sekolah,
+    sekolah,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -14,6 +25,9 @@ PIPELINES = [
     ("Jumlah Peserta Didik SD", sd_peserta_didik.run),
     ("Jumlah Guru & Tenaga Kependidikan (PTK) SD", sd_ptk.run),
     ("Rumah Sakit Kota Bandung", rumah_sakit.run),
+    ("Kepadatan Penduduk per Kecamatan", kepadatan_penduduk.run),
+    ("Jumlah Kepala Keluarga per Kecamatan", kepala_keluarga.run),
+    ("Luas Wilayah per Kecamatan", luas_kecamatan.run),
 ]
 
 

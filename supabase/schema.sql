@@ -249,8 +249,7 @@ create index if not exists idx_import_ptk_kecamatan_tahun on import_ptk_kecamata
 -- rumah_sakit_di_kota_bandung_1 (bukan rumah_sakit_di_kota_bandung biasa,
 -- yang itu versi lama tanpa lat/long/tahun dan jenis/status ketuker).
 -- =========================================================
-drop table if exists rumah_sakit;
-create table rumah_sakit (
+create table if not exists rumah_sakit (
   id bigint generated always as identity primary key,
   sumber_id bigint not null unique,
   bps_nama_kecamatan text not null,
@@ -273,4 +272,73 @@ create index if not exists idx_rumah_sakit_tahun on rumah_sakit (tahun);
 drop trigger if exists trg_rumah_sakit_updated_at on rumah_sakit;
 create trigger trg_rumah_sakit_updated_at
   before update on rumah_sakit
+  for each row execute function set_updated_at();
+
+-- =========================================================
+-- 8. Kepadatan Penduduk per Kecamatan
+-- Sumber: opendata.bandung.go.id (API Dinas Kependudukan dan Pencatatan Sipil)
+-- =========================================================
+create table if not exists kepadatan_penduduk (
+  id bigint generated always as identity primary key,
+  sumber_id bigint not null unique,
+  bps_nama_kecamatan text not null,
+  kepadatan_penduduk integer not null default 0,
+  tahun smallint not null,
+  scraped_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_kepadatan_penduduk_kecamatan on kepadatan_penduduk (bps_nama_kecamatan);
+create index if not exists idx_kepadatan_penduduk_tahun on kepadatan_penduduk (tahun);
+
+drop trigger if exists trg_kepadatan_penduduk_updated_at on kepadatan_penduduk;
+create trigger trg_kepadatan_penduduk_updated_at
+  before update on kepadatan_penduduk
+  for each row execute function set_updated_at();
+
+-- =========================================================
+-- 9. Jumlah Kepala Keluarga per Kecamatan, per Jenis Kelamin
+-- Sumber: opendata.bandung.go.id (API Dinas Kependudukan dan Pencatatan Sipil)
+-- =========================================================
+create table if not exists kepala_keluarga (
+  id bigint generated always as identity primary key,
+  sumber_id bigint not null unique,
+  bps_nama_kecamatan text not null,
+  jenis_kelamin text not null check (jenis_kelamin in ('LAKI-LAKI', 'PEREMPUAN')),
+  jumlah_kk integer not null default 0,
+  tahun smallint not null,
+  scraped_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_kepala_keluarga_kecamatan on kepala_keluarga (bps_nama_kecamatan);
+create index if not exists idx_kepala_keluarga_tahun on kepala_keluarga (tahun);
+
+drop trigger if exists trg_kepala_keluarga_updated_at on kepala_keluarga;
+create trigger trg_kepala_keluarga_updated_at
+  before update on kepala_keluarga
+  for each row execute function set_updated_at();
+
+-- =========================================================
+-- 10. Luas Wilayah per Kecamatan
+-- Sumber: opendata.bandung.go.id (API Badan Pusat Statistik Kota Bandung)
+-- =========================================================
+create table if not exists luas_kecamatan (
+  id bigint generated always as identity primary key,
+  sumber_id bigint not null unique,
+  bps_nama_kecamatan text not null,
+  luas_wilayah double precision not null,
+  tahun smallint not null,
+  scraped_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_luas_kecamatan_kecamatan on luas_kecamatan (bps_nama_kecamatan);
+
+drop trigger if exists trg_luas_kecamatan_updated_at on luas_kecamatan;
+create trigger trg_luas_kecamatan_updated_at
+  before update on luas_kecamatan
   for each row execute function set_updated_at();
