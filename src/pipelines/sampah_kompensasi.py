@@ -16,6 +16,7 @@ def _clean(row: dict) -> dict:
         "bulan": upper(row.get("bulan")),
         "kategori_kompensasi": upper(row.get("kategori_kompensasi")),
         "jumlah_kompensasi": to_float(row.get("jumlah_kompensasi")),
+        "satuan": upper(row.get("satuan")),
         "tahun": to_int(row.get("tahun")),
         "scraped_at": datetime.now(timezone.utc).isoformat(),
     }

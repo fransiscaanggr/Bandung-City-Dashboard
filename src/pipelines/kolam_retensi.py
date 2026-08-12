@@ -18,6 +18,7 @@ def _clean(row: dict) -> dict:
         "sub_das": upper(row.get("sub_das")),
         "nama_sungai": upper(row.get("nama_sungai")),
         "jumlah_kolam": to_int(row.get("jumlah_kolam")) or 0,
+        "satuan": upper(row.get("satuan")),
         "tahun": to_int(row.get("tahun")),
         "scraped_at": datetime.now(timezone.utc).isoformat(),
     }

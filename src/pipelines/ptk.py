@@ -13,6 +13,7 @@ def _clean(row: dict) -> dict:
         "jenis_ptk": upper(row.get("jenis_ptk")),
         "status_kepegawaian": upper(row.get("status_kepegawaian")),
         "jumlah_ptk": row.get("jumlah_ptk") or 0,
+        "satuan": upper(row.get("satuan")),
     }
 
 

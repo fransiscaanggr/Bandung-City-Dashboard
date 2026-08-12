@@ -15,6 +15,7 @@ def _clean(row: dict) -> dict:
         "sumber_id": row.get("id"),
         "bps_nama_kecamatan": upper(row.get("bps_nama_kecamatan")),
         "kepadatan_penduduk": to_int(row.get("kepadatan_penduduk")) or 0,
+        "satuan": upper(row.get("satuan")),
         "tahun": to_int(row.get("tahun")),
         "scraped_at": datetime.now(timezone.utc).isoformat(),
     }

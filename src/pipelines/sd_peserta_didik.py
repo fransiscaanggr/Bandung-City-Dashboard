@@ -12,6 +12,7 @@ def _clean(row: dict) -> dict:
         **base_fields(row),
         "jenis_kelamin": upper(row.get("jenis_kelamin")),
         "jumlah_siswa": row.get("jumlah_siswa") or 0,
+        "satuan": upper(row.get("satuan")),
     }
 
 

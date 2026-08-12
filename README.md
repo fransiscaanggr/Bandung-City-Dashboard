@@ -58,36 +58,41 @@ kecamatan di sumbernya. `sampah_produksi` cuma punya `jenis_sampah` + `tahun` (g
 dashboard), supaya data per sekolah tidak saling menimpa saat upsert.
 
 - `smp_sekolah` / `sd_sekolah`: `kemendagri_nama_kecamatan`, `status_sekolah`, `latitude`, `longitude`, `semester_ajaran`, `tahun`
-- `smp_peserta_didik` / `sd_peserta_didik`: `kemendagri_nama_kecamatan`, `jenis_kelamin`, `jumlah_siswa`, `semester_ajaran`, `tahun`
-- `smp_ptk` / `sd_ptk`: `kemendagri_nama_kecamatan`, `jenis_ptk`, `status_kepegawaian`, `jumlah_ptk`, `semester_ajaran`, `tahun`
+- `smp_peserta_didik` / `sd_peserta_didik`: `kemendagri_nama_kecamatan`, `jenis_kelamin`, `jumlah_siswa`, `satuan`, `semester_ajaran`, `tahun`
+- `smp_ptk` / `sd_ptk`: `kemendagri_nama_kecamatan`, `jenis_ptk`, `status_kepegawaian`, `jumlah_ptk`, `satuan`, `semester_ajaran`, `tahun`
 
 Catatan: tabel `*_sekolah` menyimpan `latitude`/`longitude` per sekolah untuk keperluan
 peta sebaran, tapi tidak menyimpan `nama_sekolah` (tidak dibutuhkan untuk chart manapun).
+Gak ada kolom `satuan` di `*_sekolah` karena gak ada kolom angka yang butuh satuan disitu.
 
 `rumah_sakit` juga punya kunci unik internal sendiri (`sumber_id`, dari `id` di API),
 dengan kolom yang dipakai tim dashboard: `bps_nama_kecamatan`, `jenis_rs`, `status_rs`,
 `kelas`, `latitude`, `longitude`, `tahun`. Kecamatan-nya pakai versi BPS (`bps_nama_kecamatan`),
-bukan kemendagri seperti tabel sekolah, karena diminta begitu.
+bukan kemendagri seperti tabel sekolah, karena diminta begitu. Gak ada kolom `satuan`
+karena datasetnya gak punya kolom angka.
 
 `kepadatan_penduduk`, `kepala_keluarga`, dan `luas_kecamatan` juga pakai `bps_nama_kecamatan`
 dan `sumber_id` (kunci unik internal), semuanya data per kecamatan (bukan per sekolah):
 
-- `kepadatan_penduduk`: `bps_nama_kecamatan`, `kepadatan_penduduk` (jiwa/km2), `tahun`
-- `kepala_keluarga`: `bps_nama_kecamatan`, `jenis_kelamin`, `jumlah_kk`, `tahun`
-- `luas_kecamatan`: `bps_nama_kecamatan`, `luas_wilayah` (km2), `tahun` (cuma ada tahun 2022 di sumbernya)
+- `kepadatan_penduduk`: `bps_nama_kecamatan`, `kepadatan_penduduk`, `satuan` (JIWA/KM2), `tahun`
+- `kepala_keluarga`: `bps_nama_kecamatan`, `jenis_kelamin`, `jumlah_kk`, `satuan` (KEPALA KELUARGA), `tahun`
+- `luas_kecamatan`: `bps_nama_kecamatan`, `luas_wilayah`, `satuan` (KILOMETER PERSEGI), `tahun` (cuma ada tahun 2022 di sumbernya)
 
 Tabel `sampah_*` juga pakai `sumber_id` (kunci unik internal), tapi gak ada `bps_nama_kecamatan`
 karena datanya kota-wide:
 
-- `sampah_produksi`: `jenis_sampah`, `produksi_sampah` (ton/hari), `tahun`
-- `sampah_ritasi`: `bulan`, `jumlah_ritasi` (rit), `tahun`
-- `sampah_capaian`: `bulan`, `jumlah_sampah` (ton), `tahun`
-- `sampah_kompensasi`: `bulan`, `kategori_kompensasi`, `jumlah_kompensasi` (rupiah), `tahun`
+- `sampah_produksi`: `jenis_sampah`, `produksi_sampah`, `satuan` (TON/HARI), `tahun`
+- `sampah_ritasi`: `bulan`, `jumlah_ritasi`, `satuan` (RIT), `tahun`
+- `sampah_capaian`: `bulan`, `jumlah_sampah`, `satuan` (TON), `tahun`
+- `sampah_kompensasi`: `bulan`, `kategori_kompensasi`, `jumlah_kompensasi`, `satuan` (RUPIAH), `tahun`
 
 `kolam_retensi` dan `kolam_retensi_volume` juga pakai `bps_nama_kecamatan` + `sumber_id`:
 
-- `kolam_retensi`: `bps_nama_kecamatan`, `nama`, `sub_das`, `nama_sungai`, `jumlah_kolam`, `tahun`
-- `kolam_retensi_volume`: `bps_nama_kecamatan`, `nama`, `sub_das`, `nama_sungai`, `volume_tampungan_total` (m3), `tahun`
+- `kolam_retensi`: `bps_nama_kecamatan`, `nama`, `sub_das`, `nama_sungai`, `jumlah_kolam`, `satuan` (KOLAM), `tahun`
+- `kolam_retensi_volume`: `bps_nama_kecamatan`, `nama`, `sub_das`, `nama_sungai`, `volume_tampungan_total`, `satuan` (METER KUBIK), `tahun`
+
+Kolom `satuan` diambil langsung dari API (bukan di-hardcode), tapi nilainya selalu
+konsisten satu nilai per tabel karena memang begitu adanya di sumber datanya.
 
 ## Struktur Project
 
