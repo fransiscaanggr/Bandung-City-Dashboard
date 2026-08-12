@@ -8,6 +8,10 @@ from src.pipelines import (
     peserta_didik,
     ptk,
     rumah_sakit,
+    sampah_capaian,
+    sampah_kompensasi,
+    sampah_produksi,
+    sampah_ritasi,
     sd_peserta_didik,
     sd_ptk,
     sd_sekolah,
@@ -28,6 +32,10 @@ PIPELINES = [
     ("Kepadatan Penduduk per Kecamatan", kepadatan_penduduk.run),
     ("Jumlah Kepala Keluarga per Kecamatan", kepala_keluarga.run),
     ("Luas Wilayah per Kecamatan", luas_kecamatan.run),
+    ("Produksi Sampah Menurut Jenisnya", sampah_produksi.run),
+    ("Ritasi Pengangkutan Sampah", sampah_ritasi.run),
+    ("Capaian Penanganan Sampah", sampah_capaian.run),
+    ("Kompensasi Penanganan Sampah", sampah_kompensasi.run),
 ]
 
 

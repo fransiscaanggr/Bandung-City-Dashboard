@@ -342,3 +342,95 @@ drop trigger if exists trg_luas_kecamatan_updated_at on luas_kecamatan;
 create trigger trg_luas_kecamatan_updated_at
   before update on luas_kecamatan
   for each row execute function set_updated_at();
+
+-- =========================================================
+-- 11. Produksi Sampah Menurut Jenisnya
+-- Sumber: opendata.bandung.go.id (API Dinas Lingkungan Hidup)
+-- Data kota-wide, gak ada dimensi kecamatan/bulan di sumbernya.
+-- =========================================================
+create table if not exists sampah_produksi (
+  id bigint generated always as identity primary key,
+  sumber_id bigint not null unique,
+  jenis_sampah text not null,
+  produksi_sampah double precision not null,
+  tahun smallint not null,
+  scraped_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_sampah_produksi_jenis on sampah_produksi (jenis_sampah);
+create index if not exists idx_sampah_produksi_tahun on sampah_produksi (tahun);
+
+drop trigger if exists trg_sampah_produksi_updated_at on sampah_produksi;
+create trigger trg_sampah_produksi_updated_at
+  before update on sampah_produksi
+  for each row execute function set_updated_at();
+
+-- =========================================================
+-- 12. Ritasi Pengangkutan Sampah
+-- Sumber: opendata.bandung.go.id (API Dinas Lingkungan Hidup)
+-- =========================================================
+create table if not exists sampah_ritasi (
+  id bigint generated always as identity primary key,
+  sumber_id bigint not null unique,
+  bulan text not null,
+  jumlah_ritasi integer not null default 0,
+  tahun smallint not null,
+  scraped_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_sampah_ritasi_tahun on sampah_ritasi (tahun);
+
+drop trigger if exists trg_sampah_ritasi_updated_at on sampah_ritasi;
+create trigger trg_sampah_ritasi_updated_at
+  before update on sampah_ritasi
+  for each row execute function set_updated_at();
+
+-- =========================================================
+-- 13. Capaian Penanganan Sampah
+-- Sumber: opendata.bandung.go.id (API Dinas Lingkungan Hidup)
+-- =========================================================
+create table if not exists sampah_capaian (
+  id bigint generated always as identity primary key,
+  sumber_id bigint not null unique,
+  bulan text not null,
+  jumlah_sampah double precision not null,
+  tahun smallint not null,
+  scraped_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_sampah_capaian_tahun on sampah_capaian (tahun);
+
+drop trigger if exists trg_sampah_capaian_updated_at on sampah_capaian;
+create trigger trg_sampah_capaian_updated_at
+  before update on sampah_capaian
+  for each row execute function set_updated_at();
+
+-- =========================================================
+-- 14. Kompensasi Penanganan Sampah
+-- Sumber: opendata.bandung.go.id (API Dinas Lingkungan Hidup)
+-- =========================================================
+create table if not exists sampah_kompensasi (
+  id bigint generated always as identity primary key,
+  sumber_id bigint not null unique,
+  bulan text not null,
+  kategori_kompensasi text not null check (kategori_kompensasi in ('KOMPENSASI JASA PELAYANAN', 'KOMPENSASI DAMPAK NEGATIF')),
+  jumlah_kompensasi double precision not null,
+  tahun smallint not null,
+  scraped_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_sampah_kompensasi_kategori on sampah_kompensasi (kategori_kompensasi);
+create index if not exists idx_sampah_kompensasi_tahun on sampah_kompensasi (tahun);
+
+drop trigger if exists trg_sampah_kompensasi_updated_at on sampah_kompensasi;
+create trigger trg_sampah_kompensasi_updated_at
+  before update on sampah_kompensasi
+  for each row execute function set_updated_at();

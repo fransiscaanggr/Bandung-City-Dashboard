@@ -1,12 +1,12 @@
 # Bandung City Dashboard - Data Pipeline
 
 Pipeline Python untuk mengambil data Kota Bandung (pendidikan SMP & SD, rumah sakit,
-kependudukan) dari [opendata.bandung.go.id](https://opendata.bandung.go.id) dan
-menyimpannya ke Supabase.
+kependudukan, persampahan) dari [opendata.bandung.go.id](https://opendata.bandung.go.id)
+dan menyimpannya ke Supabase.
 
 ## Sumber Data
 
-Data diambil dari 3 dinas/instansi berbeda. Base URL-nya sama, cuma beda nama dinas:
+Data diambil dari 4 dinas/instansi berbeda. Base URL-nya sama, cuma beda nama dinas:
 `https://opendata.bandung.go.id/api/bigdata/<nama_dinas>/<endpoint>`
 
 | Dataset | Dinas | Endpoint | Tabel Supabase |
@@ -21,6 +21,10 @@ Data diambil dari 3 dinas/instansi berbeda. Base URL-nya sama, cuma beda nama di
 | Kepadatan penduduk per kecamatan | dinas_kependudukan_dan_pencatatan_sipil | `jumlah_kepadatan_penduduk_di_kota_bandung_3` | `kepadatan_penduduk` |
 | Jumlah kepala keluarga per kecamatan, per jenis kelamin | dinas_kependudukan_dan_pencatatan_sipil | `jumlah_kepala_keluarga_di_kota_bandung_berdasarkan__3` | `kepala_keluarga` |
 | Luas wilayah per kecamatan | badan_pusat_statistik_kota_bandung | `luas_kecamatan_di_kota_bandung` | `luas_kecamatan` |
+| Produksi sampah menurut jenisnya (kota-wide) | dinas_lingkungan_hidup | `jumlah_produksi_sampah_menurut_jenisnya_di_kota_ban_2` | `sampah_produksi` |
+| Ritasi pengangkutan sampah per bulan | dinas_lingkungan_hidup | `jumlah_ritasi_pengangkutan_sampah_di_kota_bandung_2` | `sampah_ritasi` |
+| Capaian penanganan sampah per bulan | dinas_lingkungan_hidup | `jumlah_capaian_penanganan_sampah_di_kota_bandung_1` | `sampah_capaian` |
+| Kompensasi penanganan sampah per bulan | dinas_lingkungan_hidup | `jumlah_kompensasi_penanganan_sampah_di_kota_bandung_1` | `sampah_kompensasi` |
 
 Catatan: dataset guru/PTK (SMP maupun SD) tidak menyediakan data umur, jadi kolom
 umur tidak ada di tabel `smp_ptk`/`sd_ptk`.
@@ -41,6 +45,10 @@ kolom kategori yang beda maknanya jadi jangan ketuker:
 Kalau butuh KPI "Total RS Negeri", jumlahkan `status_rs` selain `SWASTA`.
 
 Pipeline ambil semua histori yang tersedia dari sumbernya: tahun 2023, 2024, dan 2025.
+
+Catatan soal data sampah: semuanya data kota-wide (Kota Bandung), gak ada dimensi
+kecamatan di sumbernya. `sampah_produksi` cuma punya `jenis_sampah` + `tahun` (gak ada
+`bulan`). `sampah_ritasi`, `sampah_capaian`, `sampah_kompensasi` punya `bulan` + `tahun`.
 
 ## Kolom per Tabel
 
@@ -66,6 +74,14 @@ dan `sumber_id` (kunci unik internal), semuanya data per kecamatan (bukan per se
 - `kepala_keluarga`: `bps_nama_kecamatan`, `jenis_kelamin`, `jumlah_kk`, `tahun`
 - `luas_kecamatan`: `bps_nama_kecamatan`, `luas_wilayah` (km2), `tahun` (cuma ada tahun 2022 di sumbernya)
 
+Tabel `sampah_*` juga pakai `sumber_id` (kunci unik internal), tapi gak ada `bps_nama_kecamatan`
+karena datanya kota-wide:
+
+- `sampah_produksi`: `jenis_sampah`, `produksi_sampah` (ton/hari), `tahun`
+- `sampah_ritasi`: `bulan`, `jumlah_ritasi` (rit), `tahun`
+- `sampah_capaian`: `bulan`, `jumlah_sampah` (ton), `tahun`
+- `sampah_kompensasi`: `bulan`, `kategori_kompensasi`, `jumlah_kompensasi` (rupiah), `tahun`
+
 ## Struktur Project
 
 ```
@@ -85,6 +101,10 @@ src/
     kepadatan_penduduk.py  pipeline kepadatan penduduk per kecamatan
     kepala_keluarga.py     pipeline jumlah kepala keluarga per kecamatan
     luas_kecamatan.py      pipeline luas wilayah per kecamatan
+    sampah_produksi.py     pipeline produksi sampah menurut jenisnya
+    sampah_ritasi.py       pipeline ritasi pengangkutan sampah
+    sampah_capaian.py      pipeline capaian penanganan sampah
+    sampah_kompensasi.py   pipeline kompensasi penanganan sampah
   main.py                entrypoint, jalankan semua pipeline
 scripts/
   import_xlsx.py         importir manual buat file Excel dari dinas
@@ -94,7 +114,7 @@ templates/
   template_jumlah_siswa.xlsx
   template_jumlah_ptk.xlsx
 supabase/
-  schema.sql             DDL untuk 13 tabel (10 hasil scraping + 3 import manual)
+  schema.sql             DDL untuk 17 tabel (14 hasil scraping + 3 import manual)
 .github/workflows/
   scrape.yml             jadwal otomatis tiap 6 jam (GitHub Actions)
 ```
@@ -124,7 +144,7 @@ melakukan **upsert** ke Supabase berdasarkan kunci unik masing-masing tabel:
 - `smp_sekolah` / `sd_sekolah`: `(npsn, tahun, semester_ajaran)`
 - `smp_peserta_didik` / `sd_peserta_didik`: `(npsn, jenis_kelamin, tahun, semester_ajaran)`
 - `smp_ptk` / `sd_ptk`: `(npsn, jenis_ptk, status_kepegawaian, tahun, semester_ajaran)`
-- `rumah_sakit` / `kepadatan_penduduk` / `kepala_keluarga` / `luas_kecamatan`: `(sumber_id)`
+- `rumah_sakit` / `kepadatan_penduduk` / `kepala_keluarga` / `luas_kecamatan` / `sampah_*`: `(sumber_id)`
 
 Kalau kombinasi kunci itu sudah ada di database, baris akan di-update (bukan duplikat).
 Kalau belum ada, baris baru ditambahkan. Dengan begitu proses scraping berulang aman
