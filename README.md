@@ -1,12 +1,12 @@
 # Bandung City Dashboard - Data Pipeline
 
 Pipeline Python untuk mengambil data Kota Bandung (pendidikan SMP & SD, rumah sakit,
-kependudukan, persampahan) dari [opendata.bandung.go.id](https://opendata.bandung.go.id)
-dan menyimpannya ke Supabase.
+kependudukan, persampahan, kolam retensi) dari
+[opendata.bandung.go.id](https://opendata.bandung.go.id) dan menyimpannya ke Supabase.
 
 ## Sumber Data
 
-Data diambil dari 4 dinas/instansi berbeda. Base URL-nya sama, cuma beda nama dinas:
+Data diambil dari 5 dinas/instansi berbeda. Base URL-nya sama, cuma beda nama dinas:
 `https://opendata.bandung.go.id/api/bigdata/<nama_dinas>/<endpoint>`
 
 | Dataset | Dinas | Endpoint | Tabel Supabase |
@@ -25,6 +25,8 @@ Data diambil dari 4 dinas/instansi berbeda. Base URL-nya sama, cuma beda nama di
 | Ritasi pengangkutan sampah per bulan | dinas_lingkungan_hidup | `jumlah_ritasi_pengangkutan_sampah_di_kota_bandung_2` | `sampah_ritasi` |
 | Capaian penanganan sampah per bulan | dinas_lingkungan_hidup | `jumlah_capaian_penanganan_sampah_di_kota_bandung_1` | `sampah_capaian` |
 | Kompensasi penanganan sampah per bulan | dinas_lingkungan_hidup | `jumlah_kompensasi_penanganan_sampah_di_kota_bandung_1` | `sampah_kompensasi` |
+| Jumlah kolam retensi per kecamatan/sub-DAS | dinas_sumber_daya_air_dan_bina_marga | `jumlah_kolam_retensi_di_kota_bandung_2` | `kolam_retensi` |
+| Volume tampungan kolam retensi | dinas_sumber_daya_air_dan_bina_marga | `volume_tampungan_kolam_retensi_di_kota_bandung_1` | `kolam_retensi_volume` |
 
 Catatan: dataset guru/PTK (SMP maupun SD) tidak menyediakan data umur, jadi kolom
 umur tidak ada di tabel `smp_ptk`/`sd_ptk`.
@@ -82,6 +84,11 @@ karena datanya kota-wide:
 - `sampah_capaian`: `bulan`, `jumlah_sampah` (ton), `tahun`
 - `sampah_kompensasi`: `bulan`, `kategori_kompensasi`, `jumlah_kompensasi` (rupiah), `tahun`
 
+`kolam_retensi` dan `kolam_retensi_volume` juga pakai `bps_nama_kecamatan` + `sumber_id`:
+
+- `kolam_retensi`: `bps_nama_kecamatan`, `nama`, `sub_das`, `nama_sungai`, `jumlah_kolam`, `tahun`
+- `kolam_retensi_volume`: `bps_nama_kecamatan`, `nama`, `sub_das`, `nama_sungai`, `volume_tampungan_total` (m3), `tahun`
+
 ## Struktur Project
 
 ```
@@ -105,6 +112,8 @@ src/
     sampah_ritasi.py       pipeline ritasi pengangkutan sampah
     sampah_capaian.py      pipeline capaian penanganan sampah
     sampah_kompensasi.py   pipeline kompensasi penanganan sampah
+    kolam_retensi.py       pipeline jumlah kolam retensi
+    kolam_retensi_volume.py pipeline volume tampungan kolam retensi
   main.py                entrypoint, jalankan semua pipeline
 scripts/
   import_xlsx.py         importir manual buat file Excel dari dinas
@@ -114,7 +123,7 @@ templates/
   template_jumlah_siswa.xlsx
   template_jumlah_ptk.xlsx
 supabase/
-  schema.sql             DDL untuk 17 tabel (14 hasil scraping + 3 import manual)
+  schema.sql             DDL untuk 19 tabel (16 hasil scraping + 3 import manual)
 .github/workflows/
   scrape.yml             jadwal otomatis tiap 6 jam (GitHub Actions)
 ```
@@ -144,7 +153,7 @@ melakukan **upsert** ke Supabase berdasarkan kunci unik masing-masing tabel:
 - `smp_sekolah` / `sd_sekolah`: `(npsn, tahun, semester_ajaran)`
 - `smp_peserta_didik` / `sd_peserta_didik`: `(npsn, jenis_kelamin, tahun, semester_ajaran)`
 - `smp_ptk` / `sd_ptk`: `(npsn, jenis_ptk, status_kepegawaian, tahun, semester_ajaran)`
-- `rumah_sakit` / `kepadatan_penduduk` / `kepala_keluarga` / `luas_kecamatan` / `sampah_*`: `(sumber_id)`
+- `rumah_sakit` / `kepadatan_penduduk` / `kepala_keluarga` / `luas_kecamatan` / `sampah_*` / `kolam_retensi*`: `(sumber_id)`
 
 Kalau kombinasi kunci itu sudah ada di database, baris akan di-update (bukan duplikat).
 Kalau belum ada, baris baru ditambahkan. Dengan begitu proses scraping berulang aman

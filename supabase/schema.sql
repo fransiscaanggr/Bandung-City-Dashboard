@@ -434,3 +434,57 @@ drop trigger if exists trg_sampah_kompensasi_updated_at on sampah_kompensasi;
 create trigger trg_sampah_kompensasi_updated_at
   before update on sampah_kompensasi
   for each row execute function set_updated_at();
+
+-- =========================================================
+-- 15. Jumlah Kolam Retensi
+-- Sumber: opendata.bandung.go.id (API Dinas Sumber Daya Air dan Bina Marga)
+-- =========================================================
+create table if not exists kolam_retensi (
+  id bigint generated always as identity primary key,
+  sumber_id bigint not null unique,
+  bps_nama_kecamatan text not null,
+  nama text not null,
+  sub_das text,
+  nama_sungai text,
+  jumlah_kolam integer not null default 0,
+  tahun smallint not null,
+  scraped_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_kolam_retensi_kecamatan on kolam_retensi (bps_nama_kecamatan);
+create index if not exists idx_kolam_retensi_sub_das on kolam_retensi (sub_das);
+create index if not exists idx_kolam_retensi_tahun on kolam_retensi (tahun);
+
+drop trigger if exists trg_kolam_retensi_updated_at on kolam_retensi;
+create trigger trg_kolam_retensi_updated_at
+  before update on kolam_retensi
+  for each row execute function set_updated_at();
+
+-- =========================================================
+-- 16. Volume Tampungan Kolam Retensi
+-- Sumber: opendata.bandung.go.id (API Dinas Sumber Daya Air dan Bina Marga)
+-- =========================================================
+create table if not exists kolam_retensi_volume (
+  id bigint generated always as identity primary key,
+  sumber_id bigint not null unique,
+  bps_nama_kecamatan text not null,
+  nama text not null,
+  sub_das text,
+  nama_sungai text,
+  volume_tampungan_total double precision not null,
+  tahun smallint not null,
+  scraped_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_kolam_retensi_volume_kecamatan on kolam_retensi_volume (bps_nama_kecamatan);
+create index if not exists idx_kolam_retensi_volume_sub_das on kolam_retensi_volume (sub_das);
+create index if not exists idx_kolam_retensi_volume_tahun on kolam_retensi_volume (tahun);
+
+drop trigger if exists trg_kolam_retensi_volume_updated_at on kolam_retensi_volume;
+create trigger trg_kolam_retensi_volume_updated_at
+  before update on kolam_retensi_volume
+  for each row execute function set_updated_at();

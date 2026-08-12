@@ -4,6 +4,8 @@ import sys
 from src.pipelines import (
     kepadatan_penduduk,
     kepala_keluarga,
+    kolam_retensi,
+    kolam_retensi_volume,
     luas_kecamatan,
     peserta_didik,
     ptk,
@@ -36,6 +38,8 @@ PIPELINES = [
     ("Ritasi Pengangkutan Sampah", sampah_ritasi.run),
     ("Capaian Penanganan Sampah", sampah_capaian.run),
     ("Kompensasi Penanganan Sampah", sampah_kompensasi.run),
+    ("Jumlah Kolam Retensi", kolam_retensi.run),
+    ("Volume Tampungan Kolam Retensi", kolam_retensi_volume.run),
 ]
 
 
